@@ -48,10 +48,14 @@ export abstract class Component<
     nextProps: Readonly<Props>,
     nextState: Readonly<State>
   ) {
-    for (const key in nextProps) {
-      const value = nextProps[key];
-      if (value !== this.props[key]) {
-        return true;
+    if ((nextProps === null) !== (this.props === null)) {
+      return true;
+    } else {
+      for (const key in nextProps) {
+        const value = nextProps[key];
+        if (value !== this.props[key]) {
+          return true;
+        }
       }
     }
     if ((nextState === null) !== (this.state === null)) {

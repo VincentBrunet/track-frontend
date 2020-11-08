@@ -1,5 +1,8 @@
 import axios from "axios";
 
+import { Tag } from "../../lib/data/Tag";
+import { Value } from "../../lib/data/Value";
+
 export class Api {
   static host = window.location.protocol + "//" + window.location.hostname;
   static root = Api.host + ":3001";
@@ -8,12 +11,8 @@ export class Api {
     return await Api.get("/indices/tag-list");
   }
 
-  public static async getTickerSummary(code: string) {
-    return await Api.get("/pages/ticker-summary/" + code);
-  }
-
-  public static async getScreenerTable() {
-    return await Api.get("/pages/screener-table");
+  public static async getValueList(): Promise<Value[]> {
+    return await Api.get("/indices/value-list");
   }
 
   private static async get(path: string) {

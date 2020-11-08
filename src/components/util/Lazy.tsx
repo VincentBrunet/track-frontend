@@ -1,5 +1,4 @@
 import React from "react";
-
 import { Component } from "../Component";
 
 export interface LazyProps {
