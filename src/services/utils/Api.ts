@@ -1,5 +1,4 @@
 import axios from "axios";
-
 import { Tag } from "../../lib/data/Tag";
 import { Value } from "../../lib/data/Value";
 
@@ -15,7 +14,15 @@ export class Api {
     return await Api.get("/indices/value-list");
   }
 
+  public static async uploadValue(data: any): Promise<Value[]> {
+    return await Api.post("/mutations/upload-value", data);
+  }
+
   private static async get(path: string) {
     return await (await axios.get(Api.root + path)).data.data;
+  }
+
+  private static async post(path: string, data: any) {
+    return await (await axios.post(Api.root + path, data)).data.data;
   }
 }
