@@ -222,7 +222,8 @@ export class TrackNew extends Component<TrackNewProps, TrackNewState> {
     this.setState({ inputCommentValue: event.target.value });
   };
 
-  private onFormSubmit = async () => {
+  private onFormSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
     const data = {
       tags: this.state.inputTagChoices,
       scalar: this.state.inputScalarValue
@@ -235,7 +236,7 @@ export class TrackNew extends Component<TrackNewProps, TrackNewState> {
         ? this.state.inputCommentValue
         : undefined,
     };
-    const result = await Api.uploadValue(data);
+    const result = await Api.valueUpload(data);
     this.setState({
       inputScalarValue: "",
       inputTitleValue: "",

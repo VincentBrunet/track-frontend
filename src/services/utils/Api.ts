@@ -14,8 +14,8 @@ export class Api {
     return await Api.get("/readings/value-list-recent");
   }
 
-  public static async uploadValue(data: any): Promise<Value[]> {
-    return await Api.post("/mutations/upload-value", data);
+  public static async valueUpload(data: any): Promise<Value[]> {
+    return await Api.post("/mutations/value-upload", data);
   }
 
   private static async get(path: string) {
