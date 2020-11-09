@@ -45,10 +45,10 @@ export class TrackNew extends Component<TrackNewProps, TrackNewState> {
 
   async onCreate() {
     this.setState({
-      tagList: await Api.getTagList(),
+      tagList: await Api.tagList(),
     });
     this.setState({
-      valueList: await Api.getValueList(),
+      valueList: await Api.valueListRecent(),
     });
   }
   onDestroy() {}
@@ -243,7 +243,7 @@ export class TrackNew extends Component<TrackNewProps, TrackNewState> {
     });
     console.log("submit result", data, result);
     this.setState({
-      valueList: await Api.getValueList(),
+      valueList: await Api.valueListRecent(),
     });
   };
 }

@@ -6,12 +6,12 @@ export class Api {
   static host = window.location.protocol + "//" + window.location.hostname;
   static root = Api.host + ":3001";
 
-  public static async getTagList(): Promise<Tag[]> {
-    return await Api.get("/indices/tag-list");
+  public static async tagList(): Promise<Tag[]> {
+    return await Api.get("/readings/tag-list");
   }
 
-  public static async getValueList(): Promise<Value[]> {
-    return await Api.get("/indices/value-list");
+  public static async valueListRecent(): Promise<Value[]> {
+    return await Api.get("/readings/value-list-recent");
   }
 
   public static async uploadValue(data: any): Promise<Value[]> {
