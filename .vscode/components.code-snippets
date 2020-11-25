@@ -1,0 +1,35 @@
+{
+  "New_Component": {
+    "scope": "typescriptreact",
+    "prefix": "$component",
+    "body": [
+      "import * as React from 'react';",
+      "",
+      "export interface ${1:$TM_FILENAME_BASE}Props {",
+      "}",
+      "",
+      "export interface ${1:$TM_FILENAME_BASE}State {",
+      "}",
+      "",
+      "export class ${1:$TM_FILENAME_BASE} extends Component<${1:$TM_FILENAME_BASE}Props, ${1:$TM_FILENAME_BASE}State> {",
+      "  state: ${1:$TM_FILENAME_BASE}State = {}",
+      "",
+      "  onCreate() {}",
+      "  onDestroy() {}",
+      "",
+      "  onUpdateProps() {}",
+      "  onUpdateState() {}",
+      "",
+      "  onUpdatePropsKey(k: string) {}",
+      "  onUpdateStateKey(k: string) {}",
+      "",
+      "  onRender() {",
+      "    return (",
+      "      <div>Hello</div>",
+      "    )",
+      "  }",
+      "}"
+    ],
+    "description": "Create a new skeleton component"
+  }
+}

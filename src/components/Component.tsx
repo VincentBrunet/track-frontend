@@ -1,4 +1,4 @@
-import React from "react";
+import * as React from "react";
 
 export interface ComponentProps {}
 export interface ComponentState {}
@@ -7,31 +7,38 @@ export abstract class Component<
   Props = ComponentProps,
   State = ComponentState
 > extends React.Component<Props, State> {
-  readonly id = "c-" + (Component._id++).toString(16);
-  private static _id = 0;
-
   constructor(props: Readonly<Props>) {
     super(props);
     this.safe(this.onAlloc);
   }
 
-  onRender(): React.ReactNode {
+  protected onAlloc() {}
+  protected onCreate() {}
+  protected onDestroy() {}
+
+  protected onRender(): React.ReactNode | undefined {
     return undefined;
   }
 
-  onAlloc() {}
-  onCreate() {}
-  onDestroy() {}
+  protected onUpdate() {}
+  protected onUpdateProps() {}
+  protected onUpdateState() {}
 
-  onUpdate() {}
-  onUpdateProps() {}
-  onUpdateState() {}
+  protected onUpdatePropsKey(k: Extract<keyof Props, string>) {}
+  protected onUpdateStateKey(k: Extract<keyof State, string>) {}
 
-  async safe(cb: () => void) {
+  private async safe(cb: () => void) {
     try {
       await cb.call(this);
     } catch (e) {
-      console.log("Error", e);
+      console.error(e);
+    }
+  }
+  private async safe1<V>(cb: (v: V) => void, v: V) {
+    try {
+      await cb.call(this, v);
+    } catch (e) {
+      console.error(e);
     }
   }
 
@@ -44,59 +51,95 @@ export abstract class Component<
   componentWillUnmount() {
     this.safe(this.onDestroy);
   }
+
   shouldComponentUpdate(
     nextProps: Readonly<Props>,
     nextState: Readonly<State>
   ) {
-    if ((nextProps === null) !== (this.props === null)) {
+    if (!this.equals(this.props, nextProps)) {
       return true;
-    } else {
-      for (const key in nextProps) {
-        const value = nextProps[key];
-        if (value !== this.props[key]) {
-          return true;
-        }
-      }
     }
-    if ((nextState === null) !== (this.state === null)) {
+    if (!this.equals(this.state, nextState)) {
       return true;
-    } else {
-      for (const key in nextState) {
-        const value = nextState[key];
-        if (value !== this.state[key]) {
-          return true;
-        }
-      }
     }
     return false;
   }
   componentDidUpdate(prevProps: Readonly<Props>, prevState: Readonly<State>) {
-    for (const key in prevProps) {
-      const value = prevProps[key];
-      if (value !== this.props[key]) {
-        this.safe(this.onUpdateProps);
-        break;
-      }
+    this.diff(this.props, prevProps, this.onUpdatePropsKey);
+    if (!this.equals(this.props, prevProps)) {
+      this.safe(this.onUpdateProps);
     }
-    if ((prevState === null) !== (this.state === null)) {
-      this.onUpdateState();
-    } else {
-      for (const key in prevState) {
-        const value = prevState[key];
-        if (value !== this.state[key]) {
-          this.safe(this.onUpdateState);
-          break;
-        }
-      }
+    this.diff(this.state, prevState, this.onUpdateStateKey);
+    if (!this.equals(this.state, prevState)) {
+      this.safe(this.onUpdateState);
     }
     this.safe(this.onUpdate);
   }
+
   render() {
     try {
       return this.onRender() ?? [];
     } catch (e) {
-      console.log("Error", e);
+      console.error(e);
       return [];
     }
+  }
+
+  private equals<T>(a: Readonly<T>, b: Readonly<T>) {
+    /* eslint-disable */
+    if ((a === null) !== (b === null)) {
+      return false;
+    }
+    if (a === b) {
+      return true;
+    }
+    for (const p in a) {
+      if (a.hasOwnProperty(p)) {
+        if (!b.hasOwnProperty(p)) {
+          return false;
+        }
+        if (a[p] !== b[p]) {
+          return false;
+        }
+      }
+    }
+    for (const p in b) {
+      if (b.hasOwnProperty(p)) {
+        if (!a.hasOwnProperty(p)) {
+          return false;
+        }
+      }
+    }
+    return true;
+    /* eslint-enable */
+  }
+
+  private diff<T>(
+    a: Readonly<T>,
+    b: Readonly<T>,
+    cb: (k: Extract<keyof T, string>) => void
+  ) {
+    /* eslint-disable */
+    if (a === b) {
+      return;
+    }
+    for (const p in a) {
+      if (a.hasOwnProperty(p)) {
+        if (!b.hasOwnProperty(p)) {
+          this.safe1(cb, p);
+        } else if (a[p] !== b[p]) {
+          this.safe1(cb, p);
+        }
+      }
+    }
+    for (const p in b) {
+      if (b.hasOwnProperty(p)) {
+        if (!a.hasOwnProperty(p)) {
+          this.safe1(cb, p);
+        }
+      }
+    }
+    return true;
+    /* eslint-enable */
   }
 }

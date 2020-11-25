@@ -1,0 +1,15 @@
+{
+  "files.exclude": {
+    "node_modules/": true,
+    "dist/": true,
+    "package-lock.json": true
+  },
+  "editor.formatOnSave": true,
+  "editor.codeActionsOnSave": {
+    "source.organizeImports": true
+  },
+  "tailwindCSS.includeLanguages": {
+    "typescript": "javascript",
+    "typescriptreact": "javascript"
+  }
+}
