@@ -1,68 +1,40 @@
 import React from "react";
-import {
-  Badge,
-  Button,
-  Card,
-  Col,
-  Container,
-  Dropdown,
-  Form,
-  Row,
-} from "react-bootstrap";
+import { Button, Col, Container, Form, Row } from "react-bootstrap";
 import { Tag } from "../../../../lib/data/Tag";
-import { Value } from "../../../../lib/data/Value";
 import { Api } from "../../../../services/utils/Api";
 import { Component } from "../../../Component";
+import { TagsPicker } from "../../kit/TagsPicker";
 
 export interface TrackNewProps {}
 
 interface TrackNewState {
-  inputTagValue: string;
-  inputTagSearch: Tag[];
-  inputTagChoices: string[];
-
-  inputScalarValue: string;
-  inputScalarValid?: boolean;
-
-  inputTitleValue: string;
-
-  inputCommentValue: string;
-
-  tagList?: Tag[];
-  valueList?: Value[];
+  tags: Tag[];
+  scalar: string;
+  title: string;
+  comment: string;
 }
 
 export class TrackNew extends Component<TrackNewProps, TrackNewState> {
   state: TrackNewState = {
-    inputTagValue: "",
-    inputTagSearch: [],
-    inputTagChoices: [],
-
-    inputScalarValue: "",
-    inputTitleValue: "",
-    inputCommentValue: "",
+    tags: [],
+    scalar: "",
+    title: "",
+    comment: "",
   };
 
-  async onCreate() {
-    this.setState({
-      tagList: await Api.tagList(),
-    });
-    this.setState({
-      valueList: await Api.valueListRecent(),
-    });
-  }
-  onDestroy() {}
-  onUpdateState() {}
-
   onRender() {
-    const hasValue =
-      this.state.inputCommentValue ||
-      this.state.inputTitleValue ||
-      this.state.inputScalarValue;
+    const hasTag = this.state.tags.length > 0;
 
-    const hasTag = this.state.inputTagChoices.length > 0;
+    const hasScalar = !!this.state.scalar;
+    const hasTitle = !!this.state.title;
+    const hasComment = !!this.state.comment;
+    const hasValue = hasScalar || hasTitle || hasComment;
 
-    const isValid = this.state.inputScalarValid !== false;
+    const isValidScalar = this.state.scalar
+      ? !isNaN(parseFloat(this.state.scalar))
+      : undefined;
+
+    const isValid = isValidScalar !== false;
 
     const canSubmit = hasTag && hasValue && isValid;
 
@@ -70,65 +42,24 @@ export class TrackNew extends Component<TrackNewProps, TrackNewState> {
       <Container>
         <Form>
           <Row>
-            <Col xs={12} sm={12} md={4} className="alert-dark">
+            <Col>
               <Form.Group>
                 <Form.Label>Tags</Form.Label>
-                <Dropdown>
-                  <Dropdown.Toggle
-                    as={Form.Control}
-                    type="text"
-                    placeholder="Type to find tags"
-                    onChange={this.inputTagOnChange}
-                    value={this.state.inputTagValue}
-                  />
-                  {this.state.inputTagValue ? (
-                    <Dropdown.Menu>
-                      {this.state.tagList?.map((tag) => {
-                        return (
-                          <Dropdown.Item
-                            key={tag.code}
-                            onClick={() => {
-                              this.inputTagExistingOnClick(tag);
-                            }}
-                          >
-                            {tag.name}
-                          </Dropdown.Item>
-                        );
-                      })}
-                      <Dropdown.Item onClick={this.inputTagCreateOnClick}>
-                        Create new tag "{this.state.inputTagValue}"
-                      </Dropdown.Item>
-                    </Dropdown.Menu>
-                  ) : undefined}
-                </Dropdown>
-
-                {this.state.inputTagChoices?.map((tag) => {
-                  return (
-                    <Badge
-                      pill
-                      variant="primary"
-                      key={tag}
-                      onClick={() => {
-                        this.inputTagRemoveOnClick(tag);
-                      }}
-                    >
-                      {tag}
-                    </Badge>
-                  );
-                })}
+                <TagsPicker
+                  tags={this.state.tags}
+                  onChange={this.onTagsChange}
+                />
               </Form.Group>
-            </Col>
 
-            <Col>
               <Form.Group>
                 <Form.Label>Value</Form.Label>
                 <Form.Control
                   type="text"
                   placeholder="Type number here ..."
-                  value={this.state.inputScalarValue}
-                  onChange={this.inputScalarOnChange}
-                  isValid={this.state.inputScalarValid === true}
-                  isInvalid={this.state.inputScalarValid === false}
+                  value={this.state.scalar}
+                  onChange={this.onScalarChange}
+                  isValid={isValidScalar === true}
+                  isInvalid={isValidScalar === false}
                 />
               </Form.Group>
 
@@ -137,8 +68,8 @@ export class TrackNew extends Component<TrackNewProps, TrackNewState> {
                 <Form.Control
                   type="text"
                   placeholder="Type title here ..."
-                  value={this.state.inputTitleValue}
-                  onChange={this.inputTitleOnChange}
+                  value={this.state.title}
+                  onChange={this.onTitleChange}
                 />
               </Form.Group>
 
@@ -148,9 +79,9 @@ export class TrackNew extends Component<TrackNewProps, TrackNewState> {
                   type="text"
                   as="textarea"
                   rows={10}
-                  value={this.state.inputCommentValue}
+                  value={this.state.comment}
                   placeholder="Type comment here ..."
-                  onChange={this.inputCommentOnChange}
+                  onChange={this.onCommentChange}
                 />
               </Form.Group>
 
@@ -166,85 +97,36 @@ export class TrackNew extends Component<TrackNewProps, TrackNewState> {
             </Col>
           </Row>
         </Form>
-
-        {this.state.valueList?.map((value) => {
-          return (
-            <Row key={value.id}>
-              <Card>{JSON.stringify(value)}</Card>
-            </Row>
-          );
-        })}
       </Container>
     );
   }
 
-  private inputTagOnChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    this.setState({ inputTagValue: event.target.value });
+  private onTagsChange = (tags: Tag[]) => {
+    this.setState({ tags: tags });
   };
-  private inputTagExistingOnClick = (tag: Tag) => {
-    this.setState({
-      inputTagChoices: [tag.code, ...this.state.inputTagChoices],
-      inputTagValue: "",
-    });
+  private onScalarChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    this.setState({ scalar: event.target.value });
   };
-  private inputTagCreateOnClick = () => {
-    this.setState({
-      inputTagChoices: [
-        this.state.inputTagValue,
-        ...this.state.inputTagChoices,
-      ],
-      inputTagValue: "",
-    });
+  private onTitleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    this.setState({ title: event.target.value });
   };
-  private inputTagRemoveOnClick = (choice: string) => {
-    const inputTagChoices = [...this.state.inputTagChoices];
-    inputTagChoices.splice(inputTagChoices.indexOf(choice), 1);
-    console.log("inputTagChoices", inputTagChoices);
-    this.setState({ inputTagChoices: inputTagChoices });
-  };
-
-  private inputScalarOnChange = (
-    event: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    const value = event.target.value;
-    this.setState({
-      inputScalarValue: value,
-      inputScalarValid: value ? !isNaN(parseFloat(value)) : undefined,
-    });
-  };
-  private inputTitleOnChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    this.setState({ inputTitleValue: event.target.value });
-  };
-
-  private inputCommentOnChange = (
-    event: React.ChangeEvent<HTMLTextAreaElement>
-  ) => {
-    this.setState({ inputCommentValue: event.target.value });
+  private onCommentChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
+    this.setState({ comment: event.target.value });
   };
 
   private onFormSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
-    const data = {
-      tags: this.state.inputTagChoices,
-      scalar: this.state.inputScalarValue
-        ? parseFloat(this.state.inputScalarValue)
-        : undefined,
-      title: this.state.inputTitleValue
-        ? this.state.inputTitleValue
-        : undefined,
-      comment: this.state.inputCommentValue
-        ? this.state.inputCommentValue
-        : undefined,
-    };
-    const result = await Api.valueUpload(data);
+    const tags = this.state.tags;
+    const scalar = this.state.scalar
+      ? parseFloat(this.state.scalar)
+      : undefined;
+    const title = this.state.title ? this.state.title : undefined;
+    const comment = this.state.comment ? this.state.comment : undefined;
+    await Api.valueUpload(tags, scalar, title, comment);
     this.setState({
-      inputScalarValue: "",
-      inputTitleValue: "",
-      inputCommentValue: "",
-    });
-    console.log("submit result", data, result);
-    this.setState({
-      valueList: await Api.valueListRecent(),
+      scalar: "",
+      title: "",
+      comment: "",
     });
   };
 }

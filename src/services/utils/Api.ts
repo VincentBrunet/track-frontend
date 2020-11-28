@@ -10,8 +10,10 @@ export class Api {
     return await Api.get("/readings/tag-list");
   }
 
-  public static async valueListForTag(tag: Tag): Promise<Value[]> {
-    return await Api.get("/readings/value-list-for-tag", { id: tag.id });
+  public static async tagListForValues(values: Value[]): Promise<Tag[]> {
+    return await Api.get("/readings/tag-list-for-values", {
+      value_ids: values.map((value) => value.id),
+    });
   }
 
   public static async valueListForTags(
@@ -20,7 +22,7 @@ export class Api {
     sort?: "asc" | "desc"
   ): Promise<Value[]> {
     return await Api.get("/readings/value-list-for-tags", {
-      ids: tags.map((tag) => tag.id),
+      tag_ids: tags.map((tag) => tag.id),
       condition: condition,
       sort: sort,
     });
@@ -30,8 +32,30 @@ export class Api {
     return await Api.get("/readings/value-list-recent");
   }
 
-  public static async valueUpload(data: any): Promise<Value[]> {
-    return await Api.post("/mutations/value-upload", {}, data);
+  public static async valueUpload(
+    tags: Tag[],
+    scalar?: number,
+    title?: string,
+    comment?: string
+  ): Promise<Value[]> {
+    return await Api.post(
+      "/mutations/value-upload",
+      {},
+      {
+        tag_ids: tags.map((tag) => tag.id),
+        scalar: scalar,
+        title: title,
+        comment: comment,
+      }
+    );
+  }
+
+  public static async mappingForValues(
+    values: Value[]
+  ): Promise<{ tagsByValue: any; valuesByTag: any }> {
+    return await Api.get("/readings/mapping-for-values", {
+      value_ids: values.map((value) => value.id),
+    });
   }
 
   private static async get(path: string, params?: any) {

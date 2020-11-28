@@ -7,6 +7,11 @@ export abstract class Component<
   Props = ComponentProps,
   State = ComponentState
 > extends React.Component<Props, State> {
+  private static s_id = 0;
+
+  protected id = (Component.s_id++).toString();
+  protected debug: boolean = false;
+
   constructor(props: Readonly<Props>) {
     super(props);
     this.safe(this.onAlloc);
@@ -21,13 +26,13 @@ export abstract class Component<
   }
 
   protected onUpdate() {}
-  protected onUpdateProps() {}
-  protected onUpdateState() {}
-
-  protected onUpdatePropsKey(k: Extract<keyof Props, string>) {}
-  protected onUpdateStateKey(k: Extract<keyof State, string>) {}
+  protected onUpdateProps(keys: Set<string>) {}
+  protected onUpdateState(keys: Set<string>) {}
 
   private async safe(cb: () => void) {
+    if (this.debug) {
+      console.log(this.id, cb.name);
+    }
     try {
       await cb.call(this);
     } catch (e) {
@@ -35,6 +40,9 @@ export abstract class Component<
     }
   }
   private async safe1<V>(cb: (v: V) => void, v: V) {
+    if (this.debug) {
+      console.log(this.id, cb.name, v);
+    }
     try {
       await cb.call(this, v);
     } catch (e) {
@@ -44,9 +52,9 @@ export abstract class Component<
 
   componentDidMount() {
     this.safe(this.onCreate);
-    this.safe(this.onUpdateProps);
-    this.safe(this.onUpdateState);
     this.safe(this.onUpdate);
+    this.prep(this.props, this.onUpdateProps);
+    this.prep(this.state, this.onUpdateState);
   }
   componentWillUnmount() {
     this.safe(this.onDestroy);
@@ -57,26 +65,29 @@ export abstract class Component<
     nextState: Readonly<State>
   ) {
     if (!this.equals(this.props, nextProps)) {
+      if (this.debug) {
+        console.log(this.id, "props changed");
+      }
       return true;
     }
     if (!this.equals(this.state, nextState)) {
+      if (this.debug) {
+        console.log(this.id, "state changed");
+      }
       return true;
     }
     return false;
   }
   componentDidUpdate(prevProps: Readonly<Props>, prevState: Readonly<State>) {
-    this.diff(this.props, prevProps, this.onUpdatePropsKey);
-    if (!this.equals(this.props, prevProps)) {
-      this.safe(this.onUpdateProps);
-    }
-    this.diff(this.state, prevState, this.onUpdateStateKey);
-    if (!this.equals(this.state, prevState)) {
-      this.safe(this.onUpdateState);
-    }
     this.safe(this.onUpdate);
+    this.diff(this.props, prevProps, this.onUpdateProps);
+    this.diff(this.state, prevState, this.onUpdateState);
   }
 
   render() {
+    if (this.debug) {
+      console.log(this.id, "onRender");
+    }
     try {
       return this.onRender() ?? [];
     } catch (e) {
@@ -117,29 +128,48 @@ export abstract class Component<
   private diff<T>(
     a: Readonly<T>,
     b: Readonly<T>,
-    cb: (k: Extract<keyof T, string>) => void
+    cb: (k: Set<string>) => void
   ) {
     /* eslint-disable */
     if (a === b) {
       return;
     }
-    for (const p in a) {
-      if (a.hasOwnProperty(p)) {
-        if (!b.hasOwnProperty(p)) {
-          this.safe1(cb, p);
-        } else if (a[p] !== b[p]) {
-          this.safe1(cb, p);
+    const keys = new Set<string>();
+    if (a !== null) {
+      for (const p in a) {
+        if (a.hasOwnProperty(p)) {
+          if (!b.hasOwnProperty(p)) {
+            keys.add(p);
+          } else if (a[p] !== b[p]) {
+            keys.add(p);
+          }
         }
       }
     }
-    for (const p in b) {
-      if (b.hasOwnProperty(p)) {
-        if (!a.hasOwnProperty(p)) {
-          this.safe1(cb, p);
+    if (b !== null) {
+      for (const p in b) {
+        if (b.hasOwnProperty(p)) {
+          if (!a.hasOwnProperty(p)) {
+            keys.add(p);
+          }
         }
       }
     }
-    return true;
+    this.safe1(cb, keys);
+    /* eslint-enable */
+  }
+
+  private prep<T>(v: Readonly<T>, cb: (keys: Set<string>) => void) {
+    /* eslint-disable */
+    const keys = new Set<string>();
+    if (v !== null) {
+      for (const p in v) {
+        if (v.hasOwnProperty(p)) {
+          keys.add(p);
+        }
+      }
+    }
+    this.safe1(cb, keys);
     /* eslint-enable */
   }
 }
